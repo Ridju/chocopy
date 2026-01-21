@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "forge"
+version = "0.1.0"
+description = "Compiler for ChocoPy"
+requires-python = ">=3.10"
+
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pyright",
+    "black",
+]
+
+[tool.pyright]
+include = ["src"]
+typeCheckingMode = "standard"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

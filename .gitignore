@@ -1,0 +1,32 @@
+# --- Python Caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.pyright_cache/
+
+# --- Environments ---
+.venv/
+venv/
+ENV/
+env/
+
+# --- IDE & LSP Tools ---
+.vscode/
+.idea/
+.project
+.pydevproject
+.basedpyright/
+
+# --- Build & Distribution ---
+dist/
+build/
+*.egg-info/
+
+# --- Compiler-spezifische Outputs (Optional) ---
+# Falls dein Compiler später .bin, .out oder .asm Dateien generiert, 
+# kannst du diese hier ausschließen:
+*.out
+*.bin
+*.asm
