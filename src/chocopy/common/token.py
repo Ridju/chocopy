@@ -31,7 +31,7 @@ class TokenType(enum.Enum):
     GLOBAL = "global"
     IMPORT = "import"
     IN = "in"
-    LABDA = "lambda"
+    LAMBDA = "lambda"
     NONLOCAL = "nonlocal"
     PASS = "pass"
     RAISE = "raise"
@@ -39,6 +39,48 @@ class TokenType(enum.Enum):
     TRY = "try"
     WITH = "with"
     YIELD = "yield"
+    EOF = "eof"
+    ID = "id"
+
+
+KEYWORDS = {
+    "none": TokenType.NONE,
+    "false": TokenType.FALSE,
+    "true": TokenType.TRUE,
+    "and": TokenType.AND,
+    "not": TokenType.NOT,
+    "or": TokenType.OR,
+    "is": TokenType.IS,
+    "as": TokenType.AS,
+    "assert": TokenType.ASSERT,
+    "async": TokenType.ASYNC,
+    "await": TokenType.AWAIT,
+    "del": TokenType.DEL,
+    "for": TokenType.FOR,
+    "while": TokenType.WHILE,
+    "break": TokenType.BREAK,
+    "continue": TokenType.CONTINUE,
+    "class": TokenType.CLASS,
+    "def": TokenType.DEF,
+    "if": TokenType.IF,
+    "elif": TokenType.ELIF,
+    "else": TokenType.ELSE,
+    "except": TokenType.EXCEPT,
+    "finally": TokenType.FINALLY,
+    "from": TokenType.FROM,
+    "global": TokenType.GLOBAL,
+    "import": TokenType.IMPORT,
+    "in": TokenType.IN,
+    "lambda": TokenType.LAMBDA,
+    "nonlocal": TokenType.NONLOCAL,
+    "pass": TokenType.PASS,
+    "raise": TokenType.RAISE,
+    "return": TokenType.RETURN,
+    "try": TokenType.TRY,
+    "with": TokenType.WITH,
+    "yield": TokenType.YIELD,
+    "eof": TokenType.EOF,
+}
 
 
 @dataclass
