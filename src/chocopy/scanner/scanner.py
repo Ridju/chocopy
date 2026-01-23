@@ -1,4 +1,6 @@
+from chocopy.common.errors import LexicalError
 from chocopy.common.token import KEYWORDS, Position, Token, TokenType
+from typing import Optional
 
 
 class Scanner:
@@ -27,7 +29,7 @@ class Scanner:
         elif c in "+":
             raise NotImplementedError("TODO")
         else:
-            raise Exception(f"[{pos.line}, {pos.column}]: Found unknown token")
+            self.error("Unknonw token found", pos)
 
     def identifier(self, pos: Position) -> Token:
         while self.peek().isalnum() or self.peek() == "_":
@@ -48,21 +50,26 @@ class Scanner:
 
     def number(self, c: str, pos: Position) -> Token:
         if c == "0" and self.peek().isdigit():
-            raise Exception(f"[{pos.line}, {pos.column}]: Leading '0' is not allowed!")
+            self.error("Leading '0' is not allowed!", pos)
 
         while self.peek().isdigit():
             self.advance()
 
         if self.peek() == ".":
-            raise Exception(f"[{pos.line}, {self.current}]: Floats are not allowed")
+            self.error("Floats are not allowed", Position(pos.line, self.column))
 
         lexeme = self.source[self.start : self.current]
         literal = int(lexeme)
 
         if literal > (2**31 - 1):
-            raise Exception(f"[{pos.line}, {pos.column}]: Number {lexeme} is too big")
+            self.error(f"Number {lexeme} is too big", pos)
 
         return Token(TokenType.INTEGER, lexeme, pos, literal)
+
+    def error(self, message: str, pos: Optional[Position] = None):
+        if pos is None:
+            pos = Position(self.line, self.column)
+        raise LexicalError(message, pos)
 
     def skip_whitespace(self):
         while True:

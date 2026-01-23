@@ -1,4 +1,5 @@
 import pytest
+from chocopy.common.errors import LexicalError
 from chocopy.scanner.scanner import Scanner
 from chocopy.common.token import TokenType, KEYWORDS
 
@@ -115,7 +116,7 @@ def test_token_sequence():
 def test_EOF_token():
     scanner = Scanner("")
 
-    for i in range(0, 10):
+    for _ in range(0, 10):
         token = scanner.scan_token()
         assert token.tokentyp == TokenType.EOF
 
@@ -153,7 +154,7 @@ def test_None_literal():
 def test_leading_zero():
     scanner = Scanner("0123")
 
-    with pytest.raises(Exception):
+    with pytest.raises(LexicalError, match="Leading '0'"):
         scanner.scan_token()
 
 
@@ -168,11 +169,11 @@ def test_number():
 
 def test_number_too_big():
     scanner = Scanner("2147483648")
-    with pytest.raises(Exception):
+    with pytest.raises(LexicalError, match="Number 2147483648"):
         scanner.scan_token()
 
 
 def test_float_number():
     scanner = Scanner("123.123")
-    with pytest.raises(Exception):
+    with pytest.raises(LexicalError, match="Floats are not"):
         scanner.scan_token()
