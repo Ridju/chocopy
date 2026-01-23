@@ -9,64 +9,60 @@ class Scanner:
         self.line = 1
         self.column = 1
 
-    def scan_token(self):
+    def scan_token(self) -> Token:
         self.skip_whitespace()
-        self.start = self.current
-
-        token_line = self.line
-        token_col = self.column
 
         if self.is_EOF():
-            return Token(TokenType.EOF, "", Position(token_line, token_col))
+            return Token(TokenType.EOF, "", Position(self.line, self.column))
 
+        self.start = self.current
+
+        pos = Position(self.line, self.column)
         c = self.advance()
 
         if c.isalpha() or c == "_":
-            while self.peek().isalnum() or self.peek() == "_":
-                self.advance()
-
-            lexeme = self.source[self.start : self.current]
-            tokentyp = KEYWORDS.get(lexeme, TokenType.ID)
-
-            literal = None
-            if tokentyp == TokenType.TRUE:
-                literal = True
-            if tokentyp == TokenType.FALSE:
-                literal = False
-            if tokentyp == TokenType.NONE:
-                literal = None
-
-            return Token(tokentyp, lexeme, Position(token_line, token_col), literal)
+            return self.identifier(pos)
         elif c.isdigit():
-            if c == "0" and self.peek().isdigit():
-                raise Exception(
-                    f"[{token_line}, {token_col}]: Leading '0' is not allowed!"
-                )
-
-            while self.peek().isdigit():
-                self.advance()
-
-            if self.peek() == ".":
-                raise Exception(
-                    f"[{token_line}, {self.current}]: Floats are not allowed"
-                )
-
-            lexeme = self.source[self.start : self.current]
-            literal = int(lexeme)
-
-            if literal > (2**31 - 1):
-                raise Exception(
-                    f"[{token_line}, {token_col}]: Number {lexeme} is too big"
-                )
-
-            return Token(
-                TokenType.INTEGER, lexeme, Position(token_line, token_col), literal
-            )
-
+            return self.number(c, pos)
         elif c in "+":
             raise NotImplementedError("TODO")
         else:
-            raise Exception(f"[{token_line}, {token_col}]: Found unknown token")
+            raise Exception(f"[{pos.line}, {pos.column}]: Found unknown token")
+
+    def identifier(self, pos: Position) -> Token:
+        while self.peek().isalnum() or self.peek() == "_":
+            self.advance()
+
+        lexeme = self.source[self.start : self.current]
+        tokentyp = KEYWORDS.get(lexeme, TokenType.ID)
+
+        literal = None
+        if tokentyp == TokenType.TRUE:
+            literal = True
+        if tokentyp == TokenType.FALSE:
+            literal = False
+        if tokentyp == TokenType.NONE:
+            literal = None
+
+        return Token(tokentyp, lexeme, pos, literal)
+
+    def number(self, c: str, pos: Position) -> Token:
+        if c == "0" and self.peek().isdigit():
+            raise Exception(f"[{pos.line}, {pos.column}]: Leading '0' is not allowed!")
+
+        while self.peek().isdigit():
+            self.advance()
+
+        if self.peek() == ".":
+            raise Exception(f"[{pos.line}, {self.current}]: Floats are not allowed")
+
+        lexeme = self.source[self.start : self.current]
+        literal = int(lexeme)
+
+        if literal > (2**31 - 1):
+            raise Exception(f"[{pos.line}, {pos.column}]: Number {lexeme} is too big")
+
+        return Token(TokenType.INTEGER, lexeme, pos, literal)
 
     def skip_whitespace(self):
         while True:
