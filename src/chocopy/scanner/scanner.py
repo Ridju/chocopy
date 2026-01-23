@@ -37,6 +37,31 @@ class Scanner:
                 literal = None
 
             return Token(tokentyp, lexeme, Position(token_line, token_col), literal)
+        elif c.isdigit():
+            if c == "0" and self.peek().isdigit():
+                raise Exception(
+                    f"[{token_line}, {token_col}]: Leading '0' is not allowed!"
+                )
+
+            while self.peek().isdigit():
+                self.advance()
+
+            if self.peek() == ".":
+                raise Exception(
+                    f"[{token_line}, {self.current}]: Floats are not allowed"
+                )
+
+            lexeme = self.source[self.start : self.current]
+            literal = int(lexeme)
+
+            if literal > (2**31 - 1):
+                raise Exception(
+                    f"[{token_line}, {token_col}]: Number {lexeme} is too big"
+                )
+
+            return Token(
+                TokenType.INTEGER, lexeme, Position(token_line, token_col), literal
+            )
 
         elif c in "+":
             raise NotImplementedError("TODO")

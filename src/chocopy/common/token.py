@@ -41,12 +41,13 @@ class TokenType(enum.Enum):
     YIELD = "yield"
     EOF = "eof"
     ID = "id"
+    INTEGER = "integer"
 
 
 KEYWORDS = {
-    "none": TokenType.NONE,
-    "false": TokenType.FALSE,
-    "true": TokenType.TRUE,
+    "None": TokenType.NONE,
+    "False": TokenType.FALSE,
+    "True": TokenType.TRUE,
     "and": TokenType.AND,
     "not": TokenType.NOT,
     "or": TokenType.OR,

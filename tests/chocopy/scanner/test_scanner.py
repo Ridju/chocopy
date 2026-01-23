@@ -102,6 +102,77 @@ def test_token_sequence():
     results = []
 
     for _ in range(3):
-        results.append(scanner.scan_token().tokentyp)
+        token = scanner.scan_token()
+        results.append((token.tokentyp, token.position.line, token.position.column))
 
-    assert results == [TokenType.IF, TokenType.WHILE, TokenType.ELSE]
+    assert results == [
+        (TokenType.IF, 1, 1),
+        (TokenType.WHILE, 1, 4),
+        (TokenType.ELSE, 1, 10),
+    ]
+
+
+def test_EOF_token():
+    scanner = Scanner("")
+
+    for i in range(0, 10):
+        token = scanner.scan_token()
+        assert token.tokentyp == TokenType.EOF
+
+
+def test_zero_number():
+    scanner = Scanner("0")
+    token = scanner.scan_token()
+
+    assert token.tokentyp == TokenType.INTEGER
+    assert token.literal == 0
+    assert token.lexeme == "0"
+
+
+def test_true_literal():
+    scanner = Scanner("True")
+    token = scanner.scan_token()
+
+    assert token.literal == True
+
+
+def test_false_literal():
+    scanner = Scanner("False")
+    token = scanner.scan_token()
+
+    assert token.literal == False
+
+
+def test_None_literal():
+    scanner = Scanner("None")
+    token = scanner.scan_token()
+
+    assert token.literal == None
+
+
+def test_leading_zero():
+    scanner = Scanner("0123")
+
+    with pytest.raises(Exception):
+        scanner.scan_token()
+
+
+def test_number():
+    scanner = Scanner("123")
+    token = scanner.scan_token()
+
+    assert token.tokentyp == TokenType.INTEGER
+    assert token.lexeme == "123"
+    assert token.literal == 123
+
+
+def test_number_too_big():
+    scanner = Scanner("2147483648")
+    with pytest.raises(Exception):
+        scanner.scan_token()
+
+
+def test_float_number():
+    scanner = Scanner("123.123")
+    with pytest.raises(Exception):
+        scanner.scan_token()
