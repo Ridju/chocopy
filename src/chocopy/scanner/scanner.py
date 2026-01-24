@@ -27,7 +27,7 @@ class Scanner:
         elif c.isdigit():
             return self.number(c, pos)
         elif c in "+":
-            raise NotImplementedError("TODO")
+            self.operator()
         else:
             self.error("Unknonw token found", pos)
 
@@ -65,6 +65,9 @@ class Scanner:
             self.error(f"Number {lexeme} is too big", pos)
 
         return Token(TokenType.INTEGER, lexeme, pos, literal)
+
+    def operator(self):
+        raise NotImplementedError("TODO")
 
     def error(self, message: str, pos: Optional[Position] = None):
         if pos is None:
