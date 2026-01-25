@@ -1,5 +1,5 @@
 from chocopy.common.errors import LexicalError
-from chocopy.common.token import KEYWORDS, Position, Token, TokenType
+from chocopy.common.token import OPERATORS, KEYWORDS, Position, Token, TokenType
 from typing import Optional
 
 
@@ -26,8 +26,8 @@ class Scanner:
             return self.identifier(pos)
         elif c.isdigit():
             return self.number(c, pos)
-        elif c in "+":
-            self.operator()
+        elif c in "+-*/><=!()[],:.-%":
+            return self.operator(c, pos)
         else:
             self.error("Unknonw token found", pos)
 
@@ -66,8 +66,42 @@ class Scanner:
 
         return Token(TokenType.INTEGER, lexeme, pos, literal)
 
-    def operator(self):
-        raise NotImplementedError("TODO")
+    def operator(self, c: str, pos: Position) -> Token:
+        if c == "/":
+            if self.match("/"):
+                return Token(TokenType.DOUBLE_SLASH, "//", pos)
+            self.error("Found unknown Operator", pos)
+        elif c == "!":
+            if self.match("="):
+                return Token(TokenType.NOT_EQUAL, "!=", pos)
+            self.error("Found unknown Operator", pos)
+        elif c == "-":
+            if self.match(">"):
+                return Token(TokenType.ARROW, "->", pos)
+            return Token(TokenType.MINUS, "-", pos)
+        elif c == "<":
+            if self.match("="):
+                return Token(TokenType.LESS_EQUAL, "<=", pos)
+            return Token(TokenType.LESS, "<", pos)
+        elif c == ">":
+            if self.match("="):
+                return Token(TokenType.GREATER_EQUAL, ">=", pos)
+            return Token(TokenType.GREATER, ">", pos)
+        elif c == "=":
+            if self.match("="):
+                return Token(TokenType.DOUBLE_EQUAL, "==", pos)
+            return Token(TokenType.EQUAL, "=", pos)
+        else:
+            return Token(OPERATORS[c], c, pos)
+
+    def match(self, expected: str) -> bool:
+        if self.peek() == expected:
+            self.advance()
+            return True
+        return False
+
+    def expected(self, c: str) -> bool:
+        return self.peek() == c
 
     def error(self, message: str, pos: Optional[Position] = None):
         if pos is None:

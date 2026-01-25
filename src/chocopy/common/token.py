@@ -42,6 +42,40 @@ class TokenType(enum.Enum):
     EOF = "eof"
     ID = "id"
     INTEGER = "integer"
+    PLUS = "+"
+    MINUS = "-"
+    MULTIPLY = "*"
+    PERCENT = "%"
+    BRACKET_LEFT = "("
+    BRACKET_RIGHT = ")"
+    BRACE_LEFT = "["
+    BRACE_RIGHT = "]"
+    COMMA = ","
+    DOT = "."
+    COLON = ":"
+    DOUBLE_SLASH = "//"
+    ARROW = "->"
+    LESS = "<"
+    GREATER = "<"
+    LESS_EQUAL = "<="
+    GREATER_EQUAL = ">="
+    DOUBLE_EQUAL = "=="
+    EQUAL = "="
+    NOT_EQUAL = "!="
+
+
+OPERATORS = {
+    "+": TokenType.PLUS,
+    "*": TokenType.MULTIPLY,
+    "%": TokenType.PERCENT,
+    "(": TokenType.BRACKET_LEFT,
+    ")": TokenType.BRACKET_RIGHT,
+    "[": TokenType.BRACE_LEFT,
+    "]": TokenType.BRACE_RIGHT,
+    ",": TokenType.COMMA,
+    ":": TokenType.COLON,
+    ".": TokenType.DOT,
+}
 
 
 KEYWORDS = {

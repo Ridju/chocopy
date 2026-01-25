@@ -177,3 +177,47 @@ def test_float_number():
     scanner = Scanner("123.123")
     with pytest.raises(LexicalError, match="Floats are not"):
         scanner.scan_token()
+
+
+@pytest.mark.parametrize(
+    "lexeme, expected_type",
+    [
+        ("+", TokenType.PLUS),
+        ("-", TokenType.MINUS),
+        ("*", TokenType.MULTIPLY),
+        ("//", TokenType.DOUBLE_SLASH),
+        ("%", TokenType.PERCENT),
+        ("<", TokenType.LESS),
+        (">", TokenType.GREATER),
+        ("<=", TokenType.LESS_EQUAL),
+        (">=", TokenType.GREATER_EQUAL),
+        ("==", TokenType.DOUBLE_EQUAL),
+        ("!=", TokenType.NOT_EQUAL),
+        ("=", TokenType.EQUAL),
+        ("(", TokenType.BRACKET_LEFT),
+        (")", TokenType.BRACKET_RIGHT),
+        ("[", TokenType.BRACE_LEFT),
+        ("]", TokenType.BRACE_RIGHT),
+        (",", TokenType.COMMA),
+        (":", TokenType.COLON),
+        (".", TokenType.DOT),
+        ("->", TokenType.ARROW),
+    ],
+)
+def test_all_operators(lexeme, expected_type):
+    scanner = Scanner(lexeme)
+    token = scanner.scan_token()
+
+    assert token.tokentyp == expected_type
+    assert token.lexeme == lexeme
+
+    assert token.position.line == 1
+    assert token.position.column == 1
+
+
+@pytest.mark.parametrize("lexeme", ["/", "!"])
+def test_single_slash_or_exclamation_mark(lexeme):
+    scanner = Scanner(lexeme)
+
+    with pytest.raises(LexicalError, match="Found unknown"):
+        scanner.scan_token()
