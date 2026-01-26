@@ -28,6 +28,8 @@ class Scanner:
             return self.number(c, pos)
         elif c in "+-*/><=!()[],:.-%":
             return self.operator(c, pos)
+        elif c == '"':
+            return self.string(c, pos)
         else:
             self.error("Unknonw token found", pos)
 
@@ -93,6 +95,9 @@ class Scanner:
             return Token(TokenType.EQUAL, "=", pos)
         else:
             return Token(OPERATORS[c], c, pos)
+
+    def string(self, c: str, pos: Position) -> Token:
+        pass
 
     def match(self, expected: str) -> bool:
         if self.peek() == expected:
