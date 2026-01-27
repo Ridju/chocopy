@@ -97,7 +97,22 @@ class Scanner:
             return Token(OPERATORS[c], c, pos)
 
     def string(self, c: str, pos: Position) -> Token:
-        pass
+        result = []
+        while self.peek() != '"' and not self.is_EOF():
+            c = self.advance()
+
+            if c == "\n":
+                self.error("Unterminated string literal (newline not allowed)", pos)
+
+        if self.is_EOF():
+            self.error("Unterminated string literal", pos)
+
+        self.advance()
+
+        lexeme = self.source[self.start : self.current]
+        literal = "".join(result)
+
+        return Token(TokenType.STRING, lexeme, pos, literal)
 
     def match(self, expected: str) -> bool:
         if self.peek() == expected:
