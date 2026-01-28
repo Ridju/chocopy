@@ -62,6 +62,7 @@ class TokenType(enum.Enum):
     DOUBLE_EQUAL = "=="
     EQUAL = "="
     NOT_EQUAL = "!="
+    STRING = "string"
 
 
 OPERATORS = {
