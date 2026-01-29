@@ -29,7 +29,7 @@ class Scanner:
         elif c in "+-*/><=!()[],:.-%":
             return self.operator(c, pos)
         elif c == '"':
-            return self.string(c, pos)
+            return self.string(pos)
         else:
             self.error("Unknonw token found", pos)
 
@@ -96,13 +96,31 @@ class Scanner:
         else:
             return Token(OPERATORS[c], c, pos)
 
-    def string(self, c: str, pos: Position) -> Token:
+    def string(self, pos: Position) -> Token:
         result = []
         while self.peek() != '"' and not self.is_EOF():
             c = self.advance()
 
             if c == "\n":
                 self.error("Unterminated string literal (newline not allowed)", pos)
+
+            if c == "\\":
+                if self.is_EOF():
+                    break
+
+                escape = self.advance()
+                if escape == "n":
+                    result.append("\n")
+                elif escape == "t":
+                    result.append("\t")
+                elif escape == "\\":
+                    result.append("\\")
+                elif escape == '"':
+                    result.append('"')
+                else:
+                    self.error(f"Invalid escape sequence: \\{escape}", pos)
+            else:
+                result.append(c)
 
         if self.is_EOF():
             self.error("Unterminated string literal", pos)

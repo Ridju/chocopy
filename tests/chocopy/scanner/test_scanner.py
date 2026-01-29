@@ -221,3 +221,51 @@ def test_single_slash_or_exclamation_mark(lexeme):
 
     with pytest.raises(LexicalError, match="Found unknown"):
         scanner.scan_token()
+
+
+def test_simple_string():
+    scanner = Scanner('"Hallo Welt"')
+    token = scanner.scan_token()
+
+    assert token.tokentyp == TokenType.STRING
+    assert token.lexeme == '"Hallo Welt"'
+    assert token.literal == "Hallo Welt"
+
+
+def test_empty_string():
+    scanner = Scanner('""')
+    token = scanner.scan_token()
+    assert token.literal == ""
+    assert token.lexeme == '""'
+
+
+def test_escape_sequences():
+    scanner = Scanner('"Tab:\\t Neu:\\n Backslash:\\\\ Quote:\\""')
+    token = scanner.scan_token()
+
+    expected_literal = 'Tab:\t Neu:\n Backslash:\\ Quote:"'
+    assert token.literal == expected_literal
+
+
+def test_string_length_with_escapes():
+    scanner = Scanner('"A\\nB"')
+    token = scanner.scan_token()
+    assert len(token.literal) == 3
+
+
+def test_invalid_escape_throws_error():
+    scanner = Scanner('"Error \\z"')
+    with pytest.raises(LexicalError, match="Invalid escape"):
+        scanner.scan_token()
+
+
+def test_unterminated_string_throws_error():
+    scanner = Scanner('"String without termination')
+    with pytest.raises(LexicalError, match="Unterminated string literal"):
+        scanner.scan_token()
+
+
+def test_newline_in_string_throws_error():
+    scanner = Scanner('"line 1\nline 2"')
+    with pytest.raises(Exception):
+        scanner.scan_token()
