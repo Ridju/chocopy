@@ -10,11 +10,19 @@ class Scanner:
         self.current = 0
         self.line = 1
         self.column = 1
+        self.indent_stack = [0]
+        self.token_queue = []
 
     def scan_token(self) -> Token:
+        if self.token_queue:
+            return self.token_queue.pop(0)
+
         self.skip_whitespace()
 
         if self.is_EOF():
+            if len(self.indent_stack) > 1:
+                self.indent_stack.pop()
+                return Token(TokenType.DEDENT, "", Position(self.line, self.column))
             return Token(TokenType.EOF, "", Position(self.line, self.column))
 
         self.start = self.current
@@ -30,6 +38,8 @@ class Scanner:
             return self.operator(c, pos)
         elif c == '"':
             return self.string(pos)
+        elif c == "\n":
+            return self.handle_newline(pos)
         else:
             self.error("Unknonw token found", pos)
 
@@ -132,6 +142,45 @@ class Scanner:
 
         return Token(TokenType.STRING, lexeme, pos, literal)
 
+    def handle_newline(self, pos: Position) -> Token:
+        self.token_queue.append(Token(TokenType.NEW_LINE, "\n", pos))
+
+        while not self.is_EOF():
+            while self.peek() in (" ", "\t", "\r"):
+                self.advance()
+
+            if self.peek() == "\n":
+                self.advance()
+            elif self.peek() == "#":
+                while self.peek() != "\n" and not self.is_EOF():
+                    self.advance()
+            else:
+                break
+
+        indentation = self.column - 1
+        last_indent = self.indent_stack[-1]
+
+        if indentation > last_indent:
+            self.indent_stack.append(indentation)
+            self.token_queue.append(
+                Token(TokenType.INDENT, "", Position(self.line, self.column))
+            )
+
+        elif indentation < last_indent:
+            while indentation < self.indent_stack[-1]:
+                self.indent_stack.pop()
+                self.token_queue.append(
+                    Token(TokenType.DEDENT, "", Position(self.line, self.column))
+                )
+
+            if self.indent_stack[-1] != indentation:
+                self.error(
+                    "Indentation error: does not match any outer indentation level",
+                    Position(self.line, self.column),
+                )
+
+        return self.token_queue.pop(0)
+
     def match(self, expected: str) -> bool:
         if self.peek() == expected:
             self.advance()
@@ -146,16 +195,20 @@ class Scanner:
             pos = Position(self.line, self.column)
         raise LexicalError(message, pos)
 
+    def skip_whitespace_except_newline(self):
+        while self.peek() in (" ", "\t", "\r"):
+            self.advance()
+
     def skip_whitespace(self):
         while True:
             c = self.peek()
             if c in (" ", "\t", "\r"):
                 self.advance()
+            elif c == "#":
+                while self.peek() != "\n" and not self.is_EOF():
+                    self.advance()
             else:
                 break
-
-    def read_word(self):
-        pass
 
     def is_EOF(self) -> bool:
         return self.current >= len(self.source)

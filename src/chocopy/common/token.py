@@ -63,6 +63,9 @@ class TokenType(enum.Enum):
     EQUAL = "="
     NOT_EQUAL = "!="
     STRING = "string"
+    NEW_LINE = "new_line"
+    INDENT = "indent"
+    DEDENT = "dedent"
 
 
 OPERATORS = {

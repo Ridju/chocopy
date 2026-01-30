@@ -269,3 +269,92 @@ def test_newline_in_string_throws_error():
     scanner = Scanner('"line 1\nline 2"')
     with pytest.raises(Exception):
         scanner.scan_token()
+
+
+def test_simple_indentation_block():
+    source = "if True:\n    pass\npass"
+    scanner = Scanner(source)
+
+    tokens = []
+    while True:
+        t = scanner.scan_token()
+        tokens.append((t.tokentyp, t.lexeme))
+        if t.tokentyp == TokenType.EOF:
+            break
+
+    expected = [
+        (TokenType.IF, "if"),
+        (TokenType.TRUE, "True"),
+        (TokenType.COLON, ":"),
+        (TokenType.NEW_LINE, "\n"),
+        (TokenType.INDENT, ""),
+        (TokenType.PASS, "pass"),
+        (TokenType.NEW_LINE, "\n"),
+        (TokenType.DEDENT, ""),
+        (TokenType.PASS, "pass"),
+        (TokenType.EOF, ""),
+    ]
+
+    for i, (typ, lex) in enumerate(expected):
+        assert tokens[i][0] == typ
+        assert tokens[i][1] == lex
+
+
+def test_nested_indentation_multiple_dedents():
+    source = "if True:\n    if False:\n        pass\npass"
+    scanner = Scanner(source)
+
+    types = []
+    while True:
+        t = scanner.scan_token()
+        types.append(t.tokentyp)
+        if t.tokentyp == TokenType.EOF:
+            break
+
+    expected_types = [
+        TokenType.IF,
+        TokenType.TRUE,
+        TokenType.COLON,
+        TokenType.NEW_LINE,
+        TokenType.INDENT,
+        TokenType.IF,
+        TokenType.FALSE,
+        TokenType.COLON,
+        TokenType.NEW_LINE,
+        TokenType.INDENT,
+        TokenType.PASS,
+        TokenType.NEW_LINE,
+        TokenType.DEDENT,
+        TokenType.DEDENT,
+        TokenType.PASS,
+        TokenType.EOF,
+    ]
+    assert types == expected_types
+
+
+def test_indentation_error_invalid_level():
+    source = "if True:\n    pass\n  pass"
+    scanner = Scanner(source)
+
+    scanner.scan_token()
+    scanner.scan_token()
+    scanner.scan_token()
+    scanner.scan_token()
+
+    with pytest.raises(LexicalError, match="Indentation error"):
+        scanner.scan_token()
+
+
+def test_comments_and_empty_lines_indentation():
+    source = "if True:\n\n    # Kommentar\n    pass"
+    scanner = Scanner(source)
+
+    types = []
+    while True:
+        t = scanner.scan_token()
+        types.append(t.tokentyp)
+        if t.tokentyp == TokenType.EOF:
+            break
+
+    assert TokenType.INDENT in types
+    assert types[types.index(TokenType.COLON) + 1] == TokenType.NEW_LINE
