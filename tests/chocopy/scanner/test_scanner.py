@@ -340,8 +340,10 @@ def test_indentation_error_invalid_level():
     scanner.scan_token()
     scanner.scan_token()
     scanner.scan_token()
+    scanner.scan_token()
+    scanner.scan_token()
 
-    with pytest.raises(LexicalError, match="Indentation error"):
+    with pytest.raises(LexicalError, match="Inconsistent"):
         scanner.scan_token()
 
 
