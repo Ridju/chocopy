@@ -348,7 +348,7 @@ def test_indentation_error_invalid_level():
 
 
 def test_comments_and_empty_lines_indentation():
-    source = "if True:\n\n    # Kommentar\n    pass"
+    source = "if True:\n\n    # Comment\n    pass"
     scanner = Scanner(source)
 
     types = []
