@@ -1,27 +1,40 @@
-from scanner import Scanner
-from common import Token
+from chocopy.scanner.scanner import Scanner
+from chocopy.common.token import Token, Position, TokenType
+from chocopy.common.errors import SyntaxError
 
 
 class Parser:
     def __init__(self, sc: Scanner):
         self.sc = sc
-        self.current_token = None
-        self.next_token = None
+        self.current_token = self.sc.scan_token()
+        self.next_token = self.sc.scan_token()
 
     def parse(self):
         raise NotImplementedError
 
     def peek(self) -> Token:
-        raise NotImplementedError
+        return self.current_token
 
     def consume(self) -> Token:
-        raise NotImplementedError
+        curr = self.current_token
+        self.current_token = self.next_token
+        self.next_token = self.sc.scan_token()
+        return curr
 
-    def expected(self, token: Token):
-        raise NotImplementedError
+    def expected(self, type: TokenType):
+        if self.check(type):
+            self.consume()
+        else:
+            self.error(
+                f"Expected {type} but got {self.peek().tokentyp}",
+                self.peek().position,
+            )
 
-    def check(self, token: Token):
-        raise NotImplementedError
+    def error(self, msg: str, pos: Position):
+        raise SyntaxError(msg, pos)
+
+    def check(self, type: TokenType):
+        return self.peek().tokentyp == type
 
     def parse_programm(self):
         raise NotImplementedError
