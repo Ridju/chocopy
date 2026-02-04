@@ -1,6 +1,14 @@
 from chocopy.scanner.scanner import Scanner
 from chocopy.common.token import Token, Position, TokenType
 from chocopy.common.errors import SyntaxError
+from chocopy.parser.node import (
+    Literal,
+    IDStringLiteral,
+    StringLiteral,
+    IntegerLiteral,
+    BoolLiteral,
+    NoneLiteral,
+)
 
 
 class Parser:
@@ -75,8 +83,30 @@ class Parser:
     def parse_block(self):
         raise NotImplementedError
 
-    def parse_literal(self):
-        raise NotImplementedError
+    def parse_literal(self) -> Literal:
+        token = self.peek()
+        if token.tokentyp == TokenType.NONE:
+            self.consume()
+            return NoneLiteral(token)
+        elif token.tokentyp == TokenType.TRUE:
+            self.consume()
+            return BoolLiteral(token)
+        elif token.tokentyp == TokenType.FALSE:
+            self.consume()
+            return BoolLiteral(token)
+        elif token.tokentyp == TokenType.INTEGER:
+            self.consume()
+            return IntegerLiteral(token)
+        elif token.tokentyp == TokenType.ID:
+            self.consume()
+            return IDStringLiteral(token)
+        elif token.tokentyp == TokenType.STRING:
+            self.consume()
+            return StringLiteral(token)
+        else:
+            self.error(
+                f"Expected special Literal type, found {token.tokentyp}", token.position
+            )
 
     def parse_expr(self):
         raise NotImplementedError

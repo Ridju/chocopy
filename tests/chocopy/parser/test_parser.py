@@ -3,6 +3,13 @@ from chocopy.scanner.scanner import Scanner
 from chocopy.parser.parser import Parser
 from chocopy.common.token import TokenType
 from chocopy.common.errors import SyntaxError
+from chocopy.parser.node import (
+    NoneLiteral,
+    BoolLiteral,
+    IntegerLiteral,
+    StringLiteral,
+    IDStringLiteral,
+)
 
 
 @pytest.fixture
@@ -72,3 +79,68 @@ def test_check_pos_test(create_parser):
 def test_check_negative_test(create_parser):
     parser = create_parser("if")
     assert not parser.check(TokenType.TRUE)
+
+
+@pytest.mark.parametrize(
+    "source, nodeType, val",
+    [
+        ("None", NoneLiteral, None),
+        ("True", BoolLiteral, True),
+        ("False", BoolLiteral, False),
+        ("123", IntegerLiteral, 123),
+        ('"hello_world"', StringLiteral, "hello_world"),
+    ],
+)
+def test_parse_literal(create_parser, source, nodeType, val):
+    parser = create_parser(source)
+    literal = parser.parse_literal()
+
+    assert isinstance(literal, nodeType)
+    assert literal.pos.line == 1
+    assert literal.pos.column == 1
+    assert literal.val == val
+
+
+def test_parse_literal_IDString(create_parser):
+    parser = create_parser("x")
+    literal = parser.parse_literal()
+
+    assert isinstance(literal, IDStringLiteral)
+    assert literal.pos.line == 1
+    assert literal.pos.column == 1
+    assert literal.name == "x"
+
+
+@pytest.mark.parametrize(
+    "source, expected_val, expected_type",
+    [
+        ("123", 123, int),
+        ("True", True, bool),
+        ("False", False, bool),
+        ("None", None, type(None)),
+    ],
+)
+def test_parse_literal_value_conversion(
+    create_parser, source, expected_val, expected_type
+):
+    parser = create_parser(source)
+    node = parser.parse_literal()
+
+    assert node.val == expected_val
+    assert isinstance(node.val, expected_type)
+
+
+def test_parse_string_literal_cleaning(create_parser):
+    source = '"ChocoPy"'
+    parser = create_parser(source)
+    node = parser.parse_literal()
+
+    assert node.val == "ChocoPy"
+
+
+@pytest.mark.parametrize("source", ["+", "def", "class", "if"])
+def test_parse_literal_errors(create_parser, source):
+    parser = create_parser(source)
+
+    with pytest.raises(SyntaxError, match="Expected special Literal type"):
+        parser.parse_literal()
