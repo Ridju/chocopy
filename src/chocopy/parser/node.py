@@ -41,3 +41,20 @@ class IDStringLiteral(Expr):
     def __init__(self, token: Token):
         self.name = token.lexeme
         super().__init__(token.position)
+
+
+class TypeAnnotation(Node):
+    def __init__(self, pos: Position):
+        super().__init__(pos)
+
+
+class ClassType(TypeAnnotation):
+    def __init__(self, name: str, pos: Position):
+        super().__init__(pos)
+        self.name = name
+
+
+class ListType(TypeAnnotation):
+    def __init__(self, el: TypeAnnotation, pos: Position):
+        super().__init__(pos)
+        self.element_type = el

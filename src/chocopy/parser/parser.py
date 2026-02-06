@@ -8,6 +8,8 @@ from chocopy.parser.node import (
     IntegerLiteral,
     BoolLiteral,
     NoneLiteral,
+    ClassType,
+    ListType,
 )
 
 
@@ -31,7 +33,7 @@ class Parser:
 
     def expected(self, type: TokenType):
         if self.check(type):
-            self.consume()
+            return self.consume()
         else:
             self.error(
                 f"Expected {type} but got {self.peek().tokentyp}",
@@ -63,7 +65,22 @@ class Parser:
         raise NotImplementedError
 
     def parse_type(self):
-        raise NotImplementedError
+        token = self.peek()
+        if (
+            token.tokentyp == TokenType.ID
+            or token.tokentyp == TokenType.IDStringLiteral
+        ):
+            self.consume()
+            return ClassType(token.lexeme, token.position)
+        elif token.tokentyp == TokenType.BRACE_LEFT:
+            self.consume()
+            el = self.parse_type()
+            self.expected(TokenType.BRACE_RIGHT)
+            return ListType(el, token.position)
+        else:
+            self.error(
+                f"Expected variable type, found {token.tokentyp}", token.position
+            )
 
     def parse_global_decl(self):
         raise NotImplementedError
