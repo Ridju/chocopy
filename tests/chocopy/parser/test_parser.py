@@ -144,3 +144,18 @@ def test_parse_literal_errors(create_parser, source):
 
     with pytest.raises(SyntaxError, match="Expected special Literal type"):
         parser.parse_literal()
+
+
+@pytest.mark.parametrize(
+    "source, expected_name",
+    [
+        ("int", "int"),
+        ("bool", "bool"),
+        ("str", "str"),
+        ("MyClass", "MyClass"),
+    ],
+)
+def test_parse_class_type(create_parser, source, expected_name):
+    parser = create_parser(source)
+    node = parser.parse_type()
+    assert node.name == expected_name

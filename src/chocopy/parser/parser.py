@@ -66,10 +66,7 @@ class Parser:
 
     def parse_type(self):
         token = self.peek()
-        if (
-            token.tokentyp == TokenType.ID
-            or token.tokentyp == TokenType.IDStringLiteral
-        ):
+        if token.tokentyp == TokenType.ID:
             self.consume()
             return ClassType(token.lexeme, token.position)
         elif token.tokentyp == TokenType.BRACE_LEFT:
