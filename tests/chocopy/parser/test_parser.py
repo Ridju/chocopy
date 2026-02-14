@@ -9,6 +9,8 @@ from chocopy.parser.node import (
     IntegerLiteral,
     StringLiteral,
     IDStringLiteral,
+    ClassType,
+    ListType,
 )
 
 
@@ -159,3 +161,23 @@ def test_parse_class_type(create_parser, source, expected_name):
     parser = create_parser(source)
     node = parser.parse_type()
     assert node.name == expected_name
+
+
+@pytest.mark.parametrize(
+    "source, depth, base_name",
+    [
+        ("[int]", 1, "int"),
+        ("[[str]]", 2, "str"),
+        ("[[[MyClass]]]", 3, "MyClass"),
+    ],
+)
+def test_parse_list_type_recursion(create_parser, source, depth, base_name):
+    parser = create_parser(source)
+    node = parser.parse_type()
+
+    for _ in range(depth):
+        assert isinstance(node, ListType)
+        node = node.element_type
+
+    assert isinstance(node, ClassType)
+    assert node.name == base_name
