@@ -76,3 +76,15 @@ class VariableDefinition(Node):
         super().__init__(var.pos)
         self.var = var
         self.literal = literal
+
+
+class GlobalDeclaration(Node):
+    def __init__(self, name: str, pos: Position):
+        super().__init__(pos)
+        self.name = name
+
+
+class NoneLocalDeclaration(Node):
+    def __init__(self, name: str, pos: Position):
+        super().__init__(pos)
+        self.name = name

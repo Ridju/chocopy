@@ -12,6 +12,8 @@ from chocopy.parser.node import (
     ListType,
     TypedVar,
     VariableDefinition,
+    GlobalDeclaration,
+    NoneLocalDeclaration,
 )
 
 
@@ -92,10 +94,32 @@ class Parser:
             )
 
     def parse_global_decl(self):
-        raise NotImplementedError
+        token = self.peek()
+        if token.tokentyp == TokenType.GLOBAL:
+            self.consume()
+            id = self.expected(TokenType.ID)
+            if self.peek().tokentyp != TokenType.EOF:
+                self.expected(TokenType.NEW_LINE)
+
+            return GlobalDeclaration(id.lexeme, id.position)
+        else:
+            self.error(
+                f"Expected 'global' keyword, found {token.tokentyp}", token.position
+            )
 
     def parse_nonlocal_decl(self):
-        raise NotImplementedError
+        token = self.peek()
+        if token.tokentyp == TokenType.NONLOCAL:
+            self.consume()
+            id = self.expected(TokenType.ID)
+            if self.peek().tokentyp != TokenType.EOF:
+                self.expected(TokenType.NEW_LINE)
+
+            return NoneLocalDeclaration(id.lexeme, id.position)
+        else:
+            self.error(
+                f"Expected 'nonlocal' keyword, found {token.tokentyp}", token.position
+            )
 
     def parse_var_def(self):
         var = self.parse_typed_var()

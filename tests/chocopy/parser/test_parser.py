@@ -13,6 +13,8 @@ from chocopy.parser.node import (
     ListType,
     TypedVar,
     VariableDefinition,
+    GlobalDeclaration,
+    NoneLocalDeclaration,
 )
 
 
@@ -238,3 +240,19 @@ def test_parse_var_def_with_comment_at_end(create_parser):
     assert node.var.name == "x"
     assert node.var.type.name == "int"
     assert node.literal.val == 123
+
+
+def test_parse_global_decl(create_parser):
+    parser = create_parser("global x")
+    node = parser.parse_global_decl()
+
+    assert isinstance(node, GlobalDeclaration)
+    assert node.name == "x"
+
+
+def test_parse_nonlocal_decl(create_parser):
+    parser = create_parser("nonlocal x")
+    node = parser.parse_nonlocal_decl()
+
+    assert isinstance(node, NoneLocalDeclaration)
+    assert node.name == "x"
