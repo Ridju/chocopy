@@ -11,6 +11,7 @@ from chocopy.parser.node import (
     ClassType,
     ListType,
     TypedVar,
+    VariableDefinition,
 )
 
 
@@ -97,7 +98,12 @@ class Parser:
         raise NotImplementedError
 
     def parse_var_def(self):
-        raise NotImplementedError
+        var = self.parse_typed_var()
+        self.expected(TokenType.EQUAL)
+        literal = self.parse_literal()
+        if self.peek().tokentyp != TokenType.EOF:
+            self.expected(TokenType.NEW_LINE)
+        return VariableDefinition(var, literal)
 
     def parse_stmt(self):
         raise NotImplementedError

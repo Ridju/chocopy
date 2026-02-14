@@ -65,3 +65,14 @@ class TypedVar(Node):
         super().__init__(pos)
         self.name = name
         self.type = type
+
+
+class VariableDefinition(Node):
+    def __init__(
+        self,
+        var: TypedVar,
+        literal: Literal,
+    ):
+        super().__init__(var.pos)
+        self.var = var
+        self.literal = literal

@@ -12,6 +12,7 @@ from chocopy.parser.node import (
     ClassType,
     ListType,
     TypedVar,
+    VariableDefinition,
 )
 
 
@@ -217,3 +218,23 @@ def test_parse_typed_var_advanced(create_parser, source, expected_name, is_list)
         assert isinstance(node.type, ListType)
     else:
         assert isinstance(node.type, ClassType)
+
+
+def test_parse_var_def(create_parser):
+    parser = create_parser("x: int = 10")
+    node = parser.parse_var_def()
+
+    assert isinstance(node, VariableDefinition)
+    assert node.var.name == "x"
+    assert node.var.type.name == "int"
+    assert node.literal.val == 10
+
+
+def test_parse_var_def_with_comment_at_end(create_parser):
+    parser = create_parser("x: int = 123 #comment")
+    node = parser.parse_var_def()
+
+    assert isinstance(node, VariableDefinition)
+    assert node.var.name == "x"
+    assert node.var.type.name == "int"
+    assert node.literal.val == 123
