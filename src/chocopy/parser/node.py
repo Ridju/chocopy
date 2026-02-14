@@ -58,3 +58,10 @@ class ListType(TypeAnnotation):
     def __init__(self, el: TypeAnnotation, pos: Position):
         super().__init__(pos)
         self.element_type = el
+
+
+class TypedVar(Node):
+    def __init__(self, name: str, type: TypeAnnotation, pos: Position):
+        super().__init__(pos)
+        self.name = name
+        self.type = type

@@ -10,6 +10,7 @@ from chocopy.parser.node import (
     NoneLiteral,
     ClassType,
     ListType,
+    TypedVar,
 )
 
 
@@ -62,7 +63,17 @@ class Parser:
         raise NotImplementedError
 
     def parse_typed_var(self):
-        raise NotImplementedError
+        token = self.peek()
+        if token.tokentyp == TokenType.ID:
+            id = self.consume()
+            _ = self.expected(TokenType.COLON)
+            type = self.parse_type()
+
+            return TypedVar(id.lexeme, type, id.position)
+        else:
+            self.error(
+                f"Expected variable identifier, found {token.tokentyp}", token.position
+            )
 
     def parse_type(self):
         token = self.peek()

@@ -11,6 +11,7 @@ from chocopy.parser.node import (
     IDStringLiteral,
     ClassType,
     ListType,
+    TypedVar,
 )
 
 
@@ -181,3 +182,38 @@ def test_parse_list_type_recursion(create_parser, source, depth, base_name):
 
     assert isinstance(node, ClassType)
     assert node.name == base_name
+
+
+@pytest.mark.parametrize(
+    "source, expected_name, expected_type",
+    [
+        ("x: int", "x", "int"),
+        ("foo: bool", "foo", "bool"),
+        ("test: str", "test", "str"),
+    ],
+)
+def test_parse_typed_var(create_parser, source, expected_name, expected_type):
+    parser = create_parser(source)
+    node = parser.parse_typed_var()
+
+    assert isinstance(node, TypedVar)
+    assert node.name == expected_name
+    assert node.type.name == expected_type
+
+
+@pytest.mark.parametrize(
+    "source, expected_name, is_list",
+    [
+        ("x: int", "x", False),
+        ("y: [int]", "y", True),
+    ],
+)
+def test_parse_typed_var_advanced(create_parser, source, expected_name, is_list):
+    parser = create_parser(source)
+    node = parser.parse_typed_var()
+
+    assert node.name == expected_name
+    if is_list:
+        assert isinstance(node.type, ListType)
+    else:
+        assert isinstance(node.type, ClassType)
