@@ -15,6 +15,7 @@ from chocopy.parser.node import (
     VariableDefinition,
     GlobalDeclaration,
     NoneLocalDeclaration,
+    Operation,
 )
 
 
@@ -256,3 +257,28 @@ def test_parse_nonlocal_decl(create_parser):
 
     assert isinstance(node, NoneLocalDeclaration)
     assert node.name == "x"
+
+
+@pytest.mark.parametrize(
+    "source, expected_name",
+    [
+        ("+", "+"),
+        ("-", "-"),
+        ("*", "*"),
+        ("//", "//"),
+        ("%", "%"),
+        ("==", "=="),
+        ("!=", "!="),
+        ("<=", "<="),
+        (">=", ">="),
+        ("<", "<"),
+        (">", ">"),
+        ("is", "is"),
+    ],
+)
+def test_parse_bin_op(create_parser, source, expected_name):
+    parser = create_parser(source)
+    node = parser.parse_bin_op()
+
+    assert isinstance(node, Operation)
+    assert node.name == expected_name

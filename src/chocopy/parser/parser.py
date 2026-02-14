@@ -14,6 +14,7 @@ from chocopy.parser.node import (
     VariableDefinition,
     GlobalDeclaration,
     NoneLocalDeclaration,
+    Operation,
 )
 
 
@@ -170,7 +171,25 @@ class Parser:
         raise NotImplementedError
 
     def parse_bin_op(self):
-        raise NotImplementedError
+        token = self.peek()
+        if (
+            token.tokentyp == TokenType.PLUS
+            or token.tokentyp == TokenType.MINUS
+            or token.tokentyp == TokenType.MULTIPLY
+            or token.tokentyp == TokenType.DOUBLE_SLASH
+            or token.tokentyp == TokenType.PERCENT
+            or token.tokentyp == TokenType.DOUBLE_EQUAL
+            or token.tokentyp == TokenType.NOT_EQUAL
+            or token.tokentyp == TokenType.LESS_EQUAL
+            or token.tokentyp == TokenType.GREATER_EQUAL
+            or token.tokentyp == TokenType.LESS
+            or token.tokentyp == TokenType.GREATER
+            or token.tokentyp == TokenType.IS
+        ):
+            self.consume()
+            return Operation(token.lexeme, token.position)
+        else:
+            self.error(f"Expected operator, found {token.tokentyp}", token.position)
 
     def parse_member_expr(self):
         raise NotImplementedError

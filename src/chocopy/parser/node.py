@@ -88,3 +88,9 @@ class NoneLocalDeclaration(Node):
     def __init__(self, name: str, pos: Position):
         super().__init__(pos)
         self.name = name
+
+
+class Operation(Node):
+    def __init__(self, name: str, pos: Position):
+        super().__init__(pos)
+        self.name = name
