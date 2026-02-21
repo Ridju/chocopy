@@ -77,7 +77,7 @@ class Parser:
             declarations.append(self.parse_class_def())
 
         while (
-            self.peek().tokentyp == tokentyp.ID
+            self.peek().tokentyp == TokenType.ID
             and self.next_token.tokentyp == TokenType.COLON
         ):
             declarations.append(self.parse_var_def())
@@ -214,6 +214,9 @@ class Parser:
             el = self.parse_type()
             self.expected(TokenType.BRACE_RIGHT)
             return ListType(el, token.position)
+        elif token.tokentyp == TokenType.STRING:
+            self.consume()
+            return ClassType(token.lexeme, token.position)
         else:
             self.error(
                 f"Expected variable type, found {token.tokentyp}", token.position
@@ -445,7 +448,7 @@ class Parser:
                     self.consume()
                     args.append(self.parse_expr())
                 self.expected(TokenType.BRACKET_RIGHT)
-                node = CallExpr(node, args)
+                node = CallExpr(node, args, curr_token.position)
             else:
                 break
 

@@ -20,6 +20,9 @@ from chocopy.parser.node import (
     VariableNode,
     IfExpr,
     BinaryExpr,
+    Program,
+    ClassDefinition,
+    FunctionDefinition,
 )
 
 
@@ -374,3 +377,81 @@ def test_syntax_errors(create_parser, source):
 
     with pytest.raises(SyntaxError):
         parser.parse_expr()
+
+
+def test_parse_class(create_parser):
+    full_code = """class Animal(object):
+    name: str = ""
+    def speak(self: "Animal") -> str:
+        pass
+
+class Dog(Animal):
+    is_good_boy: bool = True
+    def speak(self: "Dog") -> str:
+        return "Woof"
+
+global_x: int = 10
+global_y: [int] = None
+
+def outer(a: int) -> int:
+    b: int = 5
+    def inner(c: int) -> int:
+        nonlocal b
+        return a + b + c
+    return inner(10)
+
+if True:
+    print(outer(global_x))
+else:
+    global_x = 0
+    """
+    parser = create_parser(full_code)
+
+    ast = parser.parse()
+
+    assert isinstance(ast, Program)
+
+    classes = [d for d in ast.declarations if isinstance(d, ClassDefinition)]
+    vars = [
+        d
+        for d in ast.declarations
+        if not isinstance(d, (ClassDefinition, FunctionDefinition))
+    ]
+    funcs = [d for d in ast.declarations if isinstance(d, FunctionDefinition)]
+
+    assert len(classes) == 2
+    assert len(vars) == 2
+    assert len(funcs) == 1
+
+    assert classes[1].name == "Dog"
+    assert classes[1].super_class == "Animal"
+
+    outer_func = funcs[0]
+    assert len(outer_func.func_defs) == 1
+    assert outer_func.func_defs[0].name == "inner"
+
+
+def test_invalid_order_fails():
+    bad_code = """x: int = 5
+print(x)
+def fail(): -> int:
+    return 1
+    """
+    scanner = Scanner(bad_code)
+    parser = Parser(scanner)
+
+    with pytest.raises(Exception):
+        parser.parse()
+
+
+def test_empty_class_with_pass():
+    code = """class Empty(object):
+    pass
+    """
+    scanner = Scanner(code)
+    parser = Parser(scanner)
+    ast = parser.parse()
+
+    assert len(ast.declarations) == 1
+    assert isinstance(ast.declarations[0], ClassDefinition)
+    assert len(ast.declarations[0].var_defs) == 0
