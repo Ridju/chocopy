@@ -17,6 +17,7 @@ from chocopy.parser.node import (
     VariableNode,
     UnaryExpr,
     BinaryExpr,
+    IfExpr,
     MemberExpr,
     IndexExpr,
     CallExpr,
@@ -171,10 +172,14 @@ class Parser:
             )
 
     def parse_expr(self):
-        raise NotImplementedError
-
-    def parse_cexpr(self):
-        raise NotImplementedError
+        node = self.parse_or_expr()
+        if self.peek().tokentyp == TokenType.IF:
+            self.consume()
+            cond = self.parse_or_expr()
+            self.expected(TokenType.ELSE)
+            else_branch = self.parse_expr()
+            return IfExpr(node, cond, else_branch)
+        return node
 
     def parse_primary(self):
         node = None
@@ -233,11 +238,70 @@ class Parser:
 
         return node
 
-    def parse_member_expr(self):
-        raise NotImplementedError
+    def parse_unary(self):
+        token = self.peek()
+        if token.tokentyp == TokenType.MINUS or token.tokentyp == TokenType.NOT:
+            operator = self.consume()
+            return UnaryExpr(operator.lexeme, self.parse_unary(), token.position)
+        else:
+            return self.parse_primary()
 
-    def parse_index_expr(self):
-        raise NotImplementedError
+    def parse_term(self):
+        left = self.parse_unary()
+        while self.peek().tokentyp in [
+            TokenType.MULTIPLY,
+            TokenType.DOUBLE_SLASH,
+            TokenType.PERCENT,
+        ]:
+            op = self.consume()
+            right = self.parse_unary()
+            left = BinaryExpr(left, op.lexeme, right, op.position)
+
+        return left
+
+    def parse_arithmetic(self):
+        left = self.parse_term()
+        while self.peek().tokentyp in [TokenType.PLUS, TokenType.MINUS]:
+            op = self.consume()
+            right = self.parse_term()
+            left = BinaryExpr(left, op.lexeme, right, op.position)
+
+        return left
+
+    def parse_comparison(self):
+        left = self.parse_arithmetic()
+        while self.peek().tokentyp in [
+            TokenType.DOUBLE_EQUAL,
+            TokenType.NOT_EQUAL,
+            TokenType.LESS,
+            TokenType.GREATER,
+            TokenType.GREATER_EQUAL,
+            TokenType.LESS_EQUAL,
+            TokenType.IS,
+        ]:
+            op = self.consume()
+            right = self.parse_arithmetic()
+            left = BinaryExpr(left, op.lexeme, right, op.position)
+
+        return left
+
+    def parse_and_expr(self):
+        left = self.parse_comparison()
+        while self.peek().tokentyp == TokenType.AND:
+            op = self.consume()
+            right = self.parse_comparison()
+            left = BinaryExpr(left, op.lexeme, right, op.position)
+
+        return left
+
+    def parse_or_expr(self):
+        left = self.parse_and_expr()
+        while self.peek().tokentyp == TokenType.OR:
+            op = self.consume()
+            right = self.parse_and_expr()
+            left = BinaryExpr(left, op.lexeme, right, op.position)
+
+        return left
 
     def parse_target(self):
         raise NotImplementedError

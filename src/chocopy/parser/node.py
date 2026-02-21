@@ -136,3 +136,11 @@ class VariableNode(Expr):
     def __init__(self, name: str, pos: Position):
         super().__int__(pos)
         self.name = name
+
+
+class IfExpr(Expr):
+    def __init__(self, node: Expr, cond: Expr, else_branch: Expr, pos: Position):
+        super().__init__(pos)
+        self.node = node
+        self.cond = cond
+        self.else_branch = else_branch
