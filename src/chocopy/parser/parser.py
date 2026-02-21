@@ -29,6 +29,7 @@ from chocopy.parser.node import (
     AssignStmt,
     ExprStmt,
     ReturnStmt,
+    FunctionDefinition,
 )
 
 
@@ -75,10 +76,56 @@ class Parser:
         raise NotImplementedError
 
     def parse_func_def(self):
-        raise NotImplementedError
+        def_token = self.consume()
+        id = self.expected(TokenType.ID)
+        self.expected(TokenType.BRACKET_LEFT)
+        params = []
+        if self.peek().tokentyp != TokenType.BRACKET_RIGHT:
+            params.append(self.parse_typed_var())
+            while self.peek().tokentyp != TokenType.BRACKET_RIGHT:
+                self.expected(TokenType.COMMA)
+                params.append(self.parse_typed_var())
+        self.expected(TokenType.BRACKET_RIGHT)
+        self.expected(TokenType.ARROW)
+        return_type = self.parse_type()
+        self.expected(TokenType.COLON)
+        var_defs, func_defs, stmt_defs = self.parse_func_body()
+
+        return FunctionDefinition(
+            id.lexeme,
+            params,
+            return_type,
+            var_defs,
+            func_defs,
+            stmt_defs,
+            def_token.position,
+        )
 
     def parse_func_body(self):
-        raise NotImplementedError
+        self.expected(TokenType.NEW_LINE)
+        indent_token = self.expected(TokenType.INDENT)
+
+        var_defs = []
+        func_defs = []
+        stmt_defs = []
+
+        while (
+            self.peek().tokentyp == TokenType.ID
+            and self.next_token.tokentyp == TokenType.COLON
+        ):
+            var_defs.append(self.parse_var_def())
+
+        while self.peek().tokentyp == TokenType.DEF:
+            func_defs.append(self.parse_func_def())
+
+        while self.peek().tokentyp != TokenType.DEDENT:
+            if self.peek().tokentyp == TokenType.NEW_LINE:
+                self.consume()
+                continue
+            stmt_defs.append(self.parse_stmt())
+
+        self.expected(TokenType.DEDENT)
+        return var_defs, func_defs, stmt_defs
 
     def parse_typed_var(self):
         token = self.peek()

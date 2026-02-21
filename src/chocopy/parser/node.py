@@ -209,3 +209,23 @@ class ReturnStmt(Stmt):
 class PassStmt(Stmt):
     def __init__(self, position: Position):
         super().__init__(position)
+
+
+class FunctionDefinition(Node):
+    def __init__(
+        self,
+        name: str,
+        params: list[TypedVar],
+        return_type: ClassType | ListType,
+        var_defs: list[VariableDefinition],
+        func_defs: list["FunctionDefinition"],
+        statements: list[Stmt],
+        position: Position,
+    ):
+        super().__init__(position)
+        self.name = name
+        self.params = params
+        self.return_type = return_type
+        self.var_defs = var_defs
+        self.func_defs = func_defs
+        self.statements = statements
