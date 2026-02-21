@@ -229,3 +229,28 @@ class FunctionDefinition(Node):
         self.var_defs = var_defs
         self.func_defs = func_defs
         self.statements = statements
+
+
+class ClassDefinition(Node):
+    def __init__(
+        self,
+        name: str,
+        super_class: str,
+        var_defs: list[VariableDefinition],
+        method_defs: list[FunctionDefinition],
+        position: Position,
+    ):
+        super().__init__(position)
+        self.name = name
+        self.super_class = super_class
+        self.var_defs = var_defs
+        self.method_defs = method_defs
+
+
+class Program(Node):
+    def __init__(
+        self, declarations: list[Node], statements: list[Stmt], position: Position
+    ):
+        super().__init__(position)
+        self.declarations = declarations
+        self.statements = statements

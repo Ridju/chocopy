@@ -30,6 +30,8 @@ from chocopy.parser.node import (
     ExprStmt,
     ReturnStmt,
     FunctionDefinition,
+    ClassDefinition,
+    Program,
 )
 
 
@@ -67,13 +69,67 @@ class Parser:
         return self.peek().tokentyp == type
 
     def parse_programm(self):
-        raise NotImplementedError
+        pos = self.peek().position
+        declarations = []
+        stmts = []
+
+        while self.peek().tokentyp == TokenType.CLASS:
+            declarations.append(self.parse_class_def())
+
+        while (
+            self.peek().tokentyp == tokentyp.ID
+            and self.next_token.tokentyp == TokenType.COLON
+        ):
+            declarations.append(self.parse_var_def())
+
+        while self.peek().tokentyp == TokenType.DEF:
+            declarations.append(self.parse_func_def())
+
+        while self.peek().tokentyp != TokenType.EOF:
+            if self.peek().tokentyp == TokenType.NEW_LINE:
+                self.consume()
+                continue
+            stmts.append(self.parse_stmt())
+
+        return Program(declarations, stmts, pos)
 
     def parse_class_def(self):
-        raise NotImplementedError
+        class_token = self.consume()
+        name = self.expected(TokenType.ID)
+
+        self.expected(TokenType.BRACKET_LEFT)
+        super_name = self.expected(TokenType.ID)
+        self.expected(TokenType.BRACKET_RIGHT)
+
+        self.expected(TokenType.COLON)
+
+        var_defs, method_defs = self.parse_class_body()
+
+        return ClassDefinition(
+            name.lexeme, super_name.lexeme, var_defs, method_defs, class_token.position
+        )
 
     def parse_class_body(self):
-        raise NotImplementedError
+        self.expected(TokenType.NEW_LINE)
+        self.expected(TokenType.INDENT)
+
+        var_defs = []
+        method_defs = []
+
+        if self.peek().tokentyp == TokenType.PASS:
+            self.consume()
+            self.expected(TokenType.NEW_LINE)
+        else:
+            while (
+                self.peek().tokentyp == TokenType.ID
+                and self.next_token.tokentyp == TokenType.COLON
+            ):
+                var_defs.append(self.parse_var_def())
+            while self.peek().tokentyp == TokenType.DEF:
+                method_defs.append(self.parse_func_def())
+
+        self.expected(TokenType.DEDENT)
+        return var_defs, method_defs
 
     def parse_func_def(self):
         def_token = self.consume()
@@ -109,11 +165,19 @@ class Parser:
         func_defs = []
         stmt_defs = []
 
-        while (
-            self.peek().tokentyp == TokenType.ID
-            and self.next_token.tokentyp == TokenType.COLON
-        ):
-            var_defs.append(self.parse_var_def())
+        while True:
+            token = self.peek()
+            if (
+                token.tokentyp == TokenType.ID
+                and self.next_token.tokentyp == TokenType.COLON
+            ):
+                var_defs.append(self.parse_var_def())
+            elif token.tokentyp == TokenType.GLOBAL:
+                var_defs.append(self.parse_global_decl())
+            elif token.tokentyp == TokenType.NONLOCAL:
+                var_defs.append(self.parse_nonlocal_decl())
+            else:
+                break
 
         while self.peek().tokentyp == TokenType.DEF:
             func_defs.append(self.parse_func_def())
