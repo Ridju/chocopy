@@ -90,7 +90,49 @@ class NoneLocalDeclaration(Node):
         self.name = name
 
 
-class Operation(Node):
-    def __init__(self, name: str, pos: Position):
+class UnaryExpr(Expr):
+    def __init__(self, operator: str, operand: Expr, pos: Position):
         super().__init__(pos)
+        self.operator = operator
+        self.operand = operand
+
+
+class BinaryExpr(Expr):
+    def __init__(self, left: Expr, operator: str, right: Expr, pos: Position):
+        super().__init__(pos)
+        self.left = left
+        self.operator = operator
+        self.right = right
+
+
+class MemberExpr(Expr):
+    def __init__(self, obj: Expr, member: str, pos: Position):
+        super().__init__(pos)
+        self.obj = obj
+        self.member = member
+
+
+class IndexExpr(Expr):
+    def __init__(self, list_obj: Expr, index: Expr, pos: Position):
+        super().__init__(pos)
+        self.list_obj = list_obj
+        self.index = index
+
+
+class CallExpr(Expr):
+    def __init__(self, function: Expr, args: list[Expr], pos: Position):
+        super().__init__(pos)
+        self.function = function
+        self.args = args
+
+
+class ListLiteral(Expr):
+    def __init__(self, elements: list[Expr], pos: Position):
+        super().__init__(pos)
+        self.elements = elements
+
+
+class VariableNode(Expr):
+    def __init__(self, name: str, pos: Position):
+        super().__int__(pos)
         self.name = name

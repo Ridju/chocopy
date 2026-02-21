@@ -14,7 +14,13 @@ from chocopy.parser.node import (
     VariableDefinition,
     GlobalDeclaration,
     NoneLocalDeclaration,
-    Operation,
+    VariableNode,
+    UnaryExpr,
+    BinaryExpr,
+    MemberExpr,
+    IndexExpr,
+    CallExpr,
+    ListLiteral,
 )
 
 
@@ -170,26 +176,62 @@ class Parser:
     def parse_cexpr(self):
         raise NotImplementedError
 
-    def parse_bin_op(self):
+    def parse_primary(self):
+        node = None
         token = self.peek()
-        if (
-            token.tokentyp == TokenType.PLUS
-            or token.tokentyp == TokenType.MINUS
-            or token.tokentyp == TokenType.MULTIPLY
-            or token.tokentyp == TokenType.DOUBLE_SLASH
-            or token.tokentyp == TokenType.PERCENT
-            or token.tokentyp == TokenType.DOUBLE_EQUAL
-            or token.tokentyp == TokenType.NOT_EQUAL
-            or token.tokentyp == TokenType.LESS_EQUAL
-            or token.tokentyp == TokenType.GREATER_EQUAL
-            or token.tokentyp == TokenType.LESS
-            or token.tokentyp == TokenType.GREATER
-            or token.tokentyp == TokenType.IS
-        ):
+        if token.tokentyp in [
+            TokenType.INTEGER,
+            TokenType.STRING,
+            TokenType.TRUE,
+            TokenType.FALSE,
+            TokenType.NONE,
+        ]:
+            node = self.parse_literal()
+        elif token.tokentyp == TokenType.ID:
             self.consume()
-            return Operation(token.lexeme, token.position)
+            node = VariableNode(token.lexeme, token.position)
+        elif token.tokentyp == TokenType.BRACKET_LEFT:
+            self.consume()
+            expr = self.parse_expr()
+            self.expected(TokenType.BRACKET_RIGHT)
+            node = expr
+        elif token.tokentyp == TokenType.BRACE_LEFT:
+            self.consume()
+            expressions = []
+            if not self.check(TokenType.BRACE_RIGHT):
+                expressions.append(self.parse_expr())
+            while self.check(TokenType.COMMA):
+                self.consume()
+                expressions.append(self.parse_expr())
+            self.expected(TokenType.BRACE_RIGHT)
+            node = ListLiteral(expressions, token.position)
         else:
-            self.error(f"Expected operator, found {token.tokentyp}", token.position)
+            self.error(f"Expected cexpr found {token.tokentyp}", token.position)
+
+        while True:
+            if self.peek().tokentyp == TokenType.DOT:
+                self.consume()
+                id = self.expected(TokenType.ID)
+                node = self.parse_member_expr(node, id)
+            elif self.peek().tokentyp == TokenType.BRACE_LEFT:
+                self.consume()
+                expr = self.parse_expr()
+                self.expected(TokenType.BRACE_RIGHT)
+                node = IndexExpr(node, expr)
+            elif self.peek().tokentyp == TokenType.BRACKET_LEFT:
+                self.consume()
+                args = []
+                if not self.check(TokenType.BRACKET_RIGHT):
+                    args.append(self.parse_expr())
+                while self.check(TokenType.COMMA):
+                    self.consume()
+                    args.append(self.parse_expr())
+                self.expected(TokenType.BRACKET_RIGHT)
+                node = CallExpr(node, args)
+            else:
+                break
+
+        return node
 
     def parse_member_expr(self):
         raise NotImplementedError
