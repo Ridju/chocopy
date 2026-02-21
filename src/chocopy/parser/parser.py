@@ -22,6 +22,13 @@ from chocopy.parser.node import (
     IndexExpr,
     CallExpr,
     ListLiteral,
+    IfStmt,
+    WhileStmt,
+    ForStmt,
+    PassStmt,
+    AssignStmt,
+    ExprStmt,
+    ReturnStmt,
 )
 
 
@@ -138,13 +145,103 @@ class Parser:
         return VariableDefinition(var, literal)
 
     def parse_stmt(self):
-        raise NotImplementedError
+        token = self.peek()
+        if token.tokentyp == TokenType.IF:
+            return self.parse_if_stmt()
+        elif token.tokentyp == TokenType.WHILE:
+            return self.parse_while_stmt()
+        elif token.tokentyp == TokenType.FOR:
+            return self.parse_for_stmt()
+        else:
+            return self.parse_simple_stmt()
+
+    def parse_if_stmt(self):
+        if_token = self.consume()
+        cond = self.parse_expr()
+        self.expected(TokenType.COLON)
+        then_block = self.parse_block()
+
+        else_block = []
+
+        if self.peek().tokentyp == TokenType.ELIF:
+            else_block.append(self.parse_if_stmt())
+        elif self.peek().tokentyp == TokenType.ELSE:
+            self.consume()
+            self.expected(TokenType.COLON)
+            else_block = self.parse_block()
+
+        return IfStmt(cond, then_block, else_block, if_token.position)
+
+    def parse_while_stmt(self):
+        while_token = self.consume()
+        while_cond = self.parse_expr()
+        self.expected(TokenType.COLON)
+        return WhileStmt(while_cond, self.parse_block(), while_token.position)
+
+    def parse_for_stmt(self):
+        for_token = self.consume()
+        id = self.expected(TokenType.ID)
+        self.expected(TokenType.IN)
+        iterable = self.parse_expr()
+        self.expected(TokenType.COLON)
+        body = self.parse_block()
+        return ForStmt(id.lexeme, iterable, body, for_token.position)
 
     def parse_simple_stmt(self):
-        raise NotImplementedError
+        token = self.peek()
+        node = None
+        if token.tokentyp == TokenType.PASS:
+            self.consume()
+            node = PassStmt(token.position)
+        elif token.tokentyp == TokenType.RETURN:
+            return_token = self.consume()
+            val = None
+            if self.peek().tokentyp not in [
+                TokenType.NEW_LINE,
+                TokenType.DEDENT,
+                TokenType.EOF,
+            ]:
+                val = self.parse_expr()
+            node = ReturnStmt(val, return_token.position)
+        else:
+            left = self.parse_expr()
+            if self.peek().tokentyp == TokenType.EQUAL:
+                equal_token = self.consume()
+                if not isinstance(left, (VariableNode, MemberExpr, IndexExpr)):
+                    self.error(
+                        f"cannot assign to {left.__class__.__name__} at x",
+                        equal_token.position,
+                    )
+                right = self.parse_expr()
+                node = AssignStmt(left, right, equal_token.position)
+            else:
+                node = ExprStmt(left, token.position)
+
+        if self.peek().tokentyp == TokenType.NEW_LINE:
+            self.consume()
+        elif self.peek().tokentyp not in [TokenType.EOF, TokenType.DEDENT]:
+            self.error(
+                f"Exepcted newline after statement, found {self.peek().tokentyp}",
+                self.peek().position,
+            )
+
+        return node
 
     def parse_block(self):
-        raise NotImplementedError
+        self.expected(TokenType.NEW_LINE)
+        token = self.expected(TokenType.INDENT)
+        stmts = []
+        while self.peek().tokentyp != TokenType.DEDENT:
+            if self.peek().tokentyp == TokenType.NEW_LINE:
+                self.consume()
+                continue
+            stmts.append(self.parse_stmt())
+
+        if len(stmts) == 0:
+            self.error(f"Empty blocks are not allowed", token.position)
+
+        self.expected(TokenType.DEDENT)
+        return stmts
 
     def parse_literal(self) -> Literal:
         token = self.peek()
@@ -307,6 +404,3 @@ class Parser:
             left = BinaryExpr(left, op.lexeme, right, op.position)
 
         return left
-
-    def parse_target(self):
-        raise NotImplementedError

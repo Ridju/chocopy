@@ -144,3 +144,68 @@ class IfExpr(Expr):
         self.node = node
         self.cond = cond
         self.else_branch = else_branch
+
+
+class Stmt(Node):
+    pass
+
+
+class Block(Node):
+    def __init__(self, statements: list[Stmt], position: Position):
+        super().__init__(position)
+        self.statements = statements
+
+
+class IfStmt(Stmt):
+    def __init__(
+        self,
+        condition: Expr,
+        then_block: list[Stmt],
+        else_block: list[Stmt],
+        position: Position,
+    ):
+        self.condition = condition
+        self.then_block = then_block
+        self.else_block = else_block
+        self.position = position
+
+
+class WhileStmt(Stmt):
+    def __init__(self, condition: Expr, body: list[Stmt], position: Position):
+        super().__init__(position)
+        self.condition = condition
+        self.body = body
+
+
+class ForStmt(Stmt):
+    def __init__(
+        self, identifier: str, iterable: Expr, body: list[Stmt], position: Position
+    ):
+        super().__init__(position)
+        self.identifier = identifier
+        self.iterable = iterable
+        self.body = body
+
+
+class AssignStmt(Stmt):
+    def __init__(self, target: Node, value: Expr, position: Position):
+        super().__init__(position)
+        self.target = target
+        self.value = value
+
+
+class ExprStmt(Stmt):
+    def __init__(self, expr: Expr, position: Position):
+        super().__init__(position)
+        self.expr = expr
+
+
+class ReturnStmt(Stmt):
+    def __init__(self, value: Expr | None, position: Position):
+        super().__init__(position)
+        self.value = value
+
+
+class PassStmt(Stmt):
+    def __init__(self, position: Position):
+        super().__init__(position)
