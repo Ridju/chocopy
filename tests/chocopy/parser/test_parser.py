@@ -15,7 +15,11 @@ from chocopy.parser.node import (
     VariableDefinition,
     GlobalDeclaration,
     NoneLocalDeclaration,
-    Operation,
+    MemberExpr,
+    IndexExpr,
+    VariableNode,
+    IfExpr,
+    BinaryExpr,
 )
 
 
@@ -259,26 +263,114 @@ def test_parse_nonlocal_decl(create_parser):
     assert node.name == "x"
 
 
+def test_parse_arithmetic_precedence(create_parser):
+    parser = create_parser("1 + 2 * 3")
+    node = parser.parse_arithmetic()
+
+    assert node.operator == "+"
+    assert node.left.val == 1
+    assert node.right.operator == "*"
+    assert node.right.left.val == 2
+    assert node.right.right.val == 3
+
+
+def test_parse_primary_chaining(create_parser):
+    parser = create_parser("obj.prop[0]")
+    node = parser.parse_primary()
+
+    assert isinstance(node, IndexExpr)
+    assert isinstance(node.list_obj, MemberExpr)
+    assert isinstance(node.list_obj.obj, VariableNode)
+
+    assert node.index.val == 0
+    assert node.list_obj.member.name == "prop"
+    assert node.list_obj.obj.name == "obj"
+
+
+def test_if_else_expression(create_parser):
+    parser = create_parser("1 if True else 2")
+    node = parser.parse_expr()
+
+    assert isinstance(node, IfExpr)
+    assert isinstance(node.node, IntegerLiteral)
+    assert isinstance(node.cond, BoolLiteral)
+    assert isinstance(node.else_branch, IntegerLiteral)
+
+    assert node.node.val == 1
+    assert node.else_branch.val == 2
+
+
+def test_nested_if_else(create_parser):
+    parser = create_parser("1 if True else 2 if False else 3")
+    node = parser.parse_expr()
+
+    assert isinstance(node, IfExpr)
+    assert isinstance(node.node, IntegerLiteral)
+    assert isinstance(node.cond, BoolLiteral)
+    assert isinstance(node.else_branch, IfExpr)
+    assert isinstance(node.else_branch.node, IntegerLiteral)
+    assert isinstance(node.else_branch.cond, BoolLiteral)
+    assert isinstance(node.else_branch.else_branch, IntegerLiteral)
+
+    assert node.node.val == 1
+    assert node.else_branch.node.val == 2
+    assert node.else_branch.else_branch.val == 3
+
+
+def test_if_else_precedenced(create_parser):
+    parser = create_parser("x + 1 if True else y + 2")
+    node = parser.parse_expr()
+
+    assert isinstance(node, IfExpr)
+    assert isinstance(node.node, BinaryExpr)
+    assert isinstance(node.cond, BoolLiteral)
+    assert isinstance(node.else_branch, BinaryExpr)
+
+    assert isinstance(node.node.left, VariableNode)
+    assert isinstance(node.node.right, IntegerLiteral)
+    assert node.node.operator == "+"
+    assert node.node.left.name == "x"
+    assert node.node.right.val == 1
+
+    assert isinstance(node.else_branch.left, VariableNode)
+    assert isinstance(node.else_branch.right, IntegerLiteral)
+
+    assert node.else_branch.left.name == "y"
+    assert node.else_branch.right.val == 2
+    assert node.else_branch.operator == "+"
+
+
+def test_no_if_expr(create_parser):
+    parser = create_parser("1 + 2")
+    node = parser.parse_expr()
+
+    assert isinstance(node, BinaryExpr)
+    assert node.operator == "+"
+    assert node.left.val == 1
+    assert node.right.val == 2
+
+
+def test_logical_expr(create_parser):
+    parser = create_parser("a or b if c and d else e")
+    node = parser.parse_expr()
+
+    assert isinstance(node, IfExpr)
+    assert isinstance(node.cond, BinaryExpr)
+    assert isinstance(node.else_branch, VariableNode)
+    assert node.cond.operator == "and"
+    assert node.node.operator == "or"
+
+
 @pytest.mark.parametrize(
-    "source, expected_name",
+    "source",
     [
-        ("+", "+"),
-        ("-", "-"),
-        ("*", "*"),
-        ("//", "//"),
-        ("%", "%"),
-        ("==", "=="),
-        ("!=", "!="),
-        ("<=", "<="),
-        (">=", ">="),
-        ("<", "<"),
-        (">", ">"),
-        ("is", "is"),
+        "1 if True",
+        "1 if True else",
+        "if True else 2",
     ],
 )
-def test_parse_bin_op(create_parser, source, expected_name):
+def test_syntax_errors(create_parser, source):
     parser = create_parser(source)
-    node = parser.parse_bin_op()
 
-    assert isinstance(node, Operation)
-    assert node.name == expected_name
+    with pytest.raises(SyntaxError):
+        parser.parse_expr()

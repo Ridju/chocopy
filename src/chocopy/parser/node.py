@@ -134,7 +134,7 @@ class ListLiteral(Expr):
 
 class VariableNode(Expr):
     def __init__(self, name: str, pos: Position):
-        super().__int__(pos)
+        super().__init__(pos)
         self.name = name
 
 

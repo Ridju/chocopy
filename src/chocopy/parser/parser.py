@@ -174,11 +174,11 @@ class Parser:
     def parse_expr(self):
         node = self.parse_or_expr()
         if self.peek().tokentyp == TokenType.IF:
-            self.consume()
+            token = self.consume()
             cond = self.parse_or_expr()
             self.expected(TokenType.ELSE)
             else_branch = self.parse_expr()
-            return IfExpr(node, cond, else_branch)
+            return IfExpr(node, cond, else_branch, token.position)
         return node
 
     def parse_primary(self):
@@ -214,16 +214,21 @@ class Parser:
             self.error(f"Expected cexpr found {token.tokentyp}", token.position)
 
         while True:
-            if self.peek().tokentyp == TokenType.DOT:
+            curr_token = self.peek()
+            if curr_token.tokentyp == TokenType.DOT:
                 self.consume()
-                id = self.expected(TokenType.ID)
-                node = self.parse_member_expr(node, id)
-            elif self.peek().tokentyp == TokenType.BRACE_LEFT:
+                member = self.expected(TokenType.ID)
+                node = MemberExpr(
+                    node,
+                    VariableNode(member.lexeme, member.position),
+                    curr_token.position,
+                )
+            elif curr_token.tokentyp == TokenType.BRACE_LEFT:
                 self.consume()
                 expr = self.parse_expr()
                 self.expected(TokenType.BRACE_RIGHT)
-                node = IndexExpr(node, expr)
-            elif self.peek().tokentyp == TokenType.BRACKET_LEFT:
+                node = IndexExpr(node, expr, curr_token.position)
+            elif curr_token.tokentyp == TokenType.BRACKET_LEFT:
                 self.consume()
                 args = []
                 if not self.check(TokenType.BRACKET_RIGHT):
