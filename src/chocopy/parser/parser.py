@@ -41,8 +41,8 @@ class Parser:
         self.current_token = self.sc.scan_token()
         self.next_token = self.sc.scan_token()
 
-    def parse(self):
-        raise NotImplementedError
+    def parse(self) -> Program:
+        return self.parse_programm()
 
     def peek(self) -> Token:
         return self.current_token
