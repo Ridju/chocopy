@@ -6,7 +6,7 @@ Compiler for [chocopy](https://chocopy.org/) written with python
 ## Status
 
 - [x] **Scanner**
-- [ ] **Parser** (In Progress)
+- [x] **Parser**
 - [ ] **Semantic Analysis** 
 - [ ] **Code Generation**
 - [ ] **Assembler&Linking**
