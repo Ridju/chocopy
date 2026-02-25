@@ -4,6 +4,11 @@ from chocopy.parser.node import (
     Program,
     ClassDefinition,
     VariableDefinition,
+    FunctionDefinition,
+    NoneLiteral,
+    BoolLiteral,
+    IntegerLiteral,
+    StringLiteral,
 )
 from types import ClassType, IntType, BoolType, StringType, ListType, NoneType
 
@@ -74,6 +79,26 @@ class SemanticAnalyzer(BaseVisitor):
 
         return
 
+    def visit_IntegerLiteral(self, node: IntegerLiteral):
+        typ = IntType()
+        node.inferred_type = typ
+        return typ
+
+    def visit_BoolLiteral(self, node: BoolLiteral):
+        typ = BoolType()
+        node.inferred_type = typ
+        return typ
+
+    def visit_StringLiteral(self, node: StringLiteral):
+        typ = StringType()
+        node.inferred_type = typ
+        return typ
+
+    def visit_NoneLiteral(self, node: NoneLiteral):
+        typ = NoneType()
+        node.inferred_type = typ
+        return typ
+
     def global_symbol_registration(self):
         self.globals["variables"] = {}
         self.globals["functions"] = {}
@@ -82,13 +107,69 @@ class SemanticAnalyzer(BaseVisitor):
         for decl in self.ast.declarations:
             if isinstance(decl, VariableDefinition):
                 self.register_variable(decl)
+            if isinstance(decl, FunctionDefinition):
+                self.register_function(decl)
+            if isinstance(decl, ClassDefinition):
+                self.register_class(decl)
+
+    def register_class(self, node: ClassDefinition):
+        name = node.name
+        var_defs = {}
+        method_defs = {}
+
+        for var in node.var_defs:
+            var_defs[var.name] = self.convert_type(var.var.type)
+
+        for method in node.method_defs:
+            param_types = []
+            for param in method.params:
+                param_types.append(self.convert_type(param.type))
+            method_defs[method.name] = {
+                "return_type": self.convert_type(method.return_type),
+                "param_types": param_types,
+            }
+
+        if (
+            node.name in self.globals["classes"]
+            or node.name in self.globals["functions"]
+            or node.name in self.globals["variables"]
+        ):
+            self.errors.append(f"Element with name: '{name}' already defined")
+        else:
+            self.globals["classes"][name] = {
+                "variables": var_defs,
+                "methods": method_defs,
+            }
+
+    def register_function(self, node: FunctionDefinition):
+        name = node.name
+        param_types = {}
+        return_type = self.convert_type(node.return_type)
+        for param in node.params:
+            param_types[param.name] = self.convert_type(param.type)
+
+        if (
+            node.name in self.globals["classes"]
+            or node.name in self.globals["functions"]
+            or node.name in self.globals["variables"]
+        ):
+            self.errors.append(f"Element with name: '{name}' already defined")
+        else:
+            self.globals["functions"][name] = {
+                "return_typ": return_type,
+                "param_types": param_types,
+            }
 
     def register_variable(self, node: VariableDefinition):
         name = node.var.name
         var_type = self.convert_type(node.var.type)
 
-        if name in self.globals["variables"]:
-            self.errors.append(f"Duplicate variable: {name}")
+        if (
+            node.name in self.globals["classes"]
+            or node.name in self.globals["functions"]
+            or node.name in self.globals["variables"]
+        ):
+            self.errors.append(f"Element with name: '{name}' already defined")
         else:
             self.globals["variable"][name] = var_type
 
