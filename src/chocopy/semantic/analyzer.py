@@ -9,6 +9,8 @@ from chocopy.parser.node import (
     BoolLiteral,
     IntegerLiteral,
     StringLiteral,
+    VariableNode,
+    AssignStmt,
 )
 from types import ClassType, IntType, BoolType, StringType, ListType, NoneType
 
@@ -79,10 +81,26 @@ class SemanticAnalyzer(BaseVisitor):
 
         return
 
+    def visit_VariableNode(self, node: VariableNode):
+        if node.name not in self.globals["variables"]:
+            self.errors.append(f"Use of undefined vairable {node.name}")
+        else:
+            type = self.globals["variables"][node.name]
+            node.inferred_type = type
+            return type
+
     def visit_IntegerLiteral(self, node: IntegerLiteral):
         typ = IntType()
         node.inferred_type = typ
         return typ
+
+    def visit_AssignStmt(self, node: AssignStmt):
+        target_type = self.visit(node.target)
+        value_type = self.visit(node.value)
+        if not value_type.is_subtype_of(target_type, self.hierarchy):
+            self.errors.append(
+                f"Value of type : {value_type} is not assignable to type {target_type}"
+            )
 
     def visit_BoolLiteral(self, node: BoolLiteral):
         typ = BoolType()
