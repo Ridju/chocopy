@@ -11,6 +11,7 @@ from chocopy.parser.node import (
     StringLiteral,
     VariableNode,
     AssignStmt,
+    UnaryExpr,
 )
 from types import ClassType, IntType, BoolType, StringType, ListType, NoneType
 
@@ -68,10 +69,27 @@ class SemanticAnalyzer(BaseVisitor):
             self.errors.append(f"Class {node.name} cannot inherit from internal types")
         self.hierarchy[node.name] = parent
 
+    def visit_UnaryExpr(self, node: UnaryExpr):
+        operand_type = self.visit(node.operand)
+
+        if node.operator == "-":
+            if isinstance(operand_type, IntType):
+                node.inferred_type = IntType()
+            else:
+                self.errors.append(f"Cannot apply '-' to type {operand_type}")
+                node.inferred_type = IntType()
+        elif node.operator == "not":
+            if isinstance(operand_type, BoolType):
+                node.inferred_type = BoolType()
+            else:
+                self.errors.append(f"Cannot apply 'not' to type {operand_type}")
+                node.inferred_type = BoolType()
+
+        return node.inferred_type
+
     def has_cycle(self):
         for node in self.hierarchy:
             s = set()
-            # { a: b, b: c }
             while node is not None:
                 if node in s:
                     self.errors.append(f"{node} has circular dependencies")
@@ -200,7 +218,7 @@ class SemanticAnalyzer(BaseVisitor):
             elif node.name == "str":
                 return StringType()
             elif node.name == "object":
-                return ClassType("object")  # Hier nutzt du dein ClassType-Objekt
+                return ClassType("object")
             else:
                 return ClassType(node.name)
 
