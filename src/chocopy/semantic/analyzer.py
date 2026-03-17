@@ -12,6 +12,7 @@ from chocopy.parser.node import (
     VariableNode,
     AssignStmt,
     UnaryExpr,
+    BinaryExpr,
 )
 from types import ClassType, IntType, BoolType, StringType, ListType, NoneType
 
@@ -84,6 +85,38 @@ class SemanticAnalyzer(BaseVisitor):
             else:
                 self.errors.append(f"Cannot apply 'not' to type {operand_type}")
                 node.inferred_type = BoolType()
+
+        return node.inferred_type
+
+    def visit_BinaryExpr(self, node: BinaryExpr):
+        left = self.visit(node.left)
+        right = self.visit(node.right)
+
+        if node.operator in ["-", "*", "//", "%"]:
+            if isinstance(left, IntType) and isinstance(right, IntType):
+                node.inferred_type = IntType()
+            else:
+                self.errors.append(f"Arithmetic {node.operator} requires integers")
+                node.inferred_type = IntType()
+
+        elif node.operator == "+":
+            if isinstance(left, IntType) and isinstance(right, IntType):
+                node.inferred_type = IntType()
+            elif isinstance(left, StringType) and isinstance(right, StringType):
+                node.inferred_type = StringType()
+            else:
+                self.errors.append(f"'+' requires two ints oder two strings")
+                node.inferred_type = IntType()
+
+        elif node.operator in ["<", ">", "<=", ">="]:
+            if isinstance(left, IntType) and isinstance(right, IntType):
+                node.inferred_type = BoolType()
+            else:
+                self.errors.append(f"Comparison {node.operator} requires integers")
+                node.inferred_type = BoolType()
+
+        elif node.operator in ["==", "!="]:
+            node.inferred_type = BoolType()
 
         return node.inferred_type
 
