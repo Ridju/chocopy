@@ -13,6 +13,7 @@ from chocopy.parser.node import (
     AssignStmt,
     UnaryExpr,
     BinaryExpr,
+    IfExpr,
 )
 from types import ClassType, IntType, BoolType, StringType, ListType, NoneType
 
@@ -105,7 +106,7 @@ class SemanticAnalyzer(BaseVisitor):
             elif isinstance(left, StringType) and isinstance(right, StringType):
                 node.inferred_type = StringType()
             else:
-                self.errors.append(f"'+' requires two ints oder two strings")
+                self.errors.append("'+' requires two ints oder two strings")
                 node.inferred_type = IntType()
 
         elif node.operator in ["<", ">", "<=", ">="]:
@@ -119,6 +120,41 @@ class SemanticAnalyzer(BaseVisitor):
             node.inferred_type = BoolType()
 
         return node.inferred_type
+
+    def visit_IfExpr(self, node: IfExpr):
+        cond_type = self.visit(node.cond)
+        if not isinstance(cond_type, BoolType):
+            self.errors.append("Condition in if-expression must be bool")
+
+        then_type = self.visit(node.node)
+        else_type = self.visit(node.else_branch)
+
+        common = self.get_common(then_type, else_type)
+
+        node.inferred_type = common
+
+        return common
+
+    def get_common(self, t1, t2):
+        if str(t1) == str(t2):
+            return t1
+
+        if isinstance(t1, ListType) or isinstance(t2, ListType):
+            return ClassType("object")
+
+        path1 = []
+        curr = getattr(t1, "name", "object")
+        while curr is not None:
+            path1.append(curr)
+            curr = self.hierarchy.get(curr)
+
+        curr = getattr(t2, "name", "object")
+        while curr is not None:
+            if curr in path1:
+                return ClassType(curr)
+            curr = self.hierarchy.get(curr)
+
+        return ClassType("object")
 
     def has_cycle(self):
         for node in self.hierarchy:
